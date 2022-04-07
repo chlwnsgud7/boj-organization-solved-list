@@ -92,6 +92,27 @@ def get_solved_by_group(group_id):
         group_problems.update(get_solved(user)[1])
     return group_problems
 
+def get_problem_by_level(level):
+    url = f"https://solved.ac/api/v3/search/problem?query=tier%3A{level}"
+    r_level_problem = requests.get(url)
+    if r_level_problem.status_code == requests.codes.ok:
+        level_problem = json.loads(r_level_problem.content.decode('utf-8'))
+
+        items = level_problem.get("items")
+        problems = []
+        for item in items:
+            problems.append(item.get("problemId"))
+    else:
+        print("난이도 별 문제 요청 실패")
+    return problems
+
+"""def get_unsolved_by_group(group_id):
+    solved_problem = get_solved_by_group(group_id)
+    for level in range(30):
+        level_problem = get_problem_by_level(level+1)
+        unsolved_level_problem = level_problem - solved_problem"""
+
+
 user_id = "siontama"
 group_id = "385"
 
@@ -111,7 +132,7 @@ group_users = get_user_in_group(group_id)
 print(f"========{group_id}에 속한 유저들========")
 print(group_users)
 
-group_problems = get_solved_by_group(group_id)
+"""group_problems = get_solved_by_group(group_id)
 print(f"========{group_id}에 속한 유저들이 푼 문제들========")
-print(group_problems)
+print(group_problems)"""
 
