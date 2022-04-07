@@ -42,13 +42,7 @@ def get_solved(user_id):
         items = solved.get("items")
         solved_problems = []
         for item in items:
-            solved_problems.append(
-                {
-                    'problemId': item.get("problemId"),
-                    'titleKo': item.get("titleKo"),
-                    'level': item.get("level"),
-                }
-            )
+            solved_problems.append(item.get("problemId"))
         # print("푼 문제수와 젤 고난이도 문제 1개만 >>>", count, solved_problems[0])
     else:
         print("푼 문제들 요청 실패")
@@ -61,6 +55,17 @@ def get_user_in_group(group_id):
     :rtype: list
     """
     url = f"https://solved.ac/api/v3/ranking/in_organization?organizationId={group_id}"
+    r_user_in_group = requests.get(url)
+    if r_user_in_group.status_code == requests.codes.ok:
+        user_in_group = json.loads(r_user_in_group.content.decode('utf-8'))
+
+        items = user_in_group.get("items")
+        users = []
+        for item in items:
+            users.append(item.get("handle"))
+    else:
+        print("그룹 내 유저 요청 실패")
+    return users
 
 def get_count_by_level(user_id):
     """
@@ -79,17 +84,34 @@ def get_count_by_level(user_id):
         print("레벨별, 전체 문제수, 푼 문제수  요청 실패")
     return filted_count_by_level
 
+def get_solved_by_group(group_id):
+    group_users = get_user_in_group(group_id)
+    group_problems = set()
+    for user in group_users:
+        print(get_solved(user)[1])
+        group_problems.update(get_solved(user)[1])
+    return group_problems
 
 user_id = "siontama"
 group_id = "385"
+
 profile_dict = get_profile(user_id)
 print(f"========{user_id}님의 프로필========")
 print(profile_dict)
 
-count, sovled_list = get_solved(user_id)
+count, solved_list = get_solved(user_id)
 print(f"========{user_id}님이 푼 문제들({count})========")
-print(sovled_list)
+print(solved_list)
 
 print(f"========{user_id}님이 푼 문제들의 레벨별 갯수========")
 count_by_level_list = get_count_by_level(user_id)
 print(count_by_level_list)
+
+group_users = get_user_in_group(group_id)
+print(f"========{group_id}에 속한 유저들========")
+print(group_users)
+
+group_problems = get_solved_by_group(group_id)
+print(f"========{group_id}에 속한 유저들이 푼 문제들========")
+print(group_problems)
+
