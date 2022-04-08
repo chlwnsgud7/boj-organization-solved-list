@@ -45,7 +45,7 @@ def get_solved(user_id):
 
     solved_problems = []
     for page in range(pages):
-        sleep(10)
+        sleep(5)
         page_url = f"{url}&page={page + 1}"
         print(page_url)
         r_solved = requests.get(page_url)
