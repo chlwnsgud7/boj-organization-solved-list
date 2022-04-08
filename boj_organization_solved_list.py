@@ -1,4 +1,6 @@
 import json
+from time import sleep
+
 import requests
 
 
@@ -37,17 +39,27 @@ def get_solved(user_id):
     r_solved = requests.get(url)
     if r_solved.status_code == requests.codes.ok:
         solved = json.loads(r_solved.content.decode('utf-8'))
-
-        count = solved.get("count")
-
-        items = solved.get("items")
-        solved_problems = []
-        for item in items:
-            solved_problems.append(item.get("problemId"))
-        # print("푼 문제수와 젤 고난이도 문제 1개만 >>>", count, solved_problems[0])
+        pages = (solved.get("count") - 1) // 100 + 1
     else:
         print("푼 문제들 요청 실패")
-        print(url)
+
+    solved_problems = []
+    for page in range(pages):
+        sleep(10)
+        page_url = f"{url}&page={page + 1}"
+        print(page_url)
+        r_solved = requests.get(page_url)
+        if r_solved.status_code == requests.codes.ok:
+            solved = json.loads(r_solved.content.decode('utf-8'))
+            count = solved.get("count")
+            items = solved.get("items")
+            for item in items:
+                solved_problems.append(item.get("problemId"))
+            # print("푼 문제수와 젤 고난이도 문제 1개만 >>>", count, solved_problems[0])
+        else:
+            print("푼 문제들 요청 실패")
+            print(r_solved.status_code)
+            print(url)
     return count, solved_problems
 
 
@@ -104,9 +116,11 @@ def get_solved_by_group(group_id):
     group_problems = set()
     n = 1
     for user in group_users:
+        sleep(10)
         print(n, " / ", len(group_users))
-        print(get_solved(user)[1])
-        group_problems.update(get_solved(user)[1])
+        get_solved_by_user = get_solved(user)[1]
+        print(get_solved_by_user)
+        group_problems.update(get_solved_by_user)
         n = n + 1
     return group_problems
 
@@ -118,7 +132,7 @@ def get_problem_by_level(level):
         level_problem = json.loads(r_level_problem.content.decode('utf-8'))
 
         items = level_problem.get("items")
-        problems = {}
+        problems = set()
         for item in items:
             problems.add(item.get("problemId"))
     else:
@@ -131,7 +145,7 @@ def get_unsolved_by_group(group_id):
     for level in range(30):
         level_problem = get_problem_by_level(level + 1)
         unsolved_level_problem = level_problem - solved_problem
-        if len(unsolved_level_problem):
+        if len(unsolved_level_problem) > 0:
             return unsolved_level_problem
         print(f"all solved level {level + 1}")
     print(f"all solved boj")
@@ -140,7 +154,7 @@ def get_unsolved_by_group(group_id):
 user_id = "siontama"
 group_id = "385"
 
-profile_dict = get_profile(user_id)
+"""profile_dict = get_profile(user_id)
 print(f"========{user_id}님의 프로필========")
 print(profile_dict)
 
@@ -156,8 +170,8 @@ group_users = get_user_in_group(group_id)
 print(f"========{group_id}에 속한 유저들========")
 print(group_users)
 
-"""group_problems = get_solved_by_group(group_id)
+group_problems = get_solved_by_group(group_id)
 print(f"========{group_id}에 속한 유저들이 푼 문제들========")
 print(group_problems)"""
 
-get_unsolved_by_group(group_id)
+print(get_unsolved_by_group(group_id))
