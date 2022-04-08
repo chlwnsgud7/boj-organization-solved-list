@@ -116,7 +116,7 @@ def get_solved_by_group(group_id):
     group_problems = set()
     n = 1
     for user in group_users:
-        sleep(10)
+        sleep(5)
         print(n, " / ", len(group_users))
         get_solved_by_user = get_solved(user)[1]
         print(get_solved_by_user)
