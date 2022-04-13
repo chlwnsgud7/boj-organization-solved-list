@@ -62,7 +62,7 @@ def get_solved(user_id):
 
     solved_problems = []
     for page in range(pages):
-        sleep(5)
+        sleep(3)
         page_url = f"{url}&page={page + 1}"
         print(page_url)
         r_solved = requests.get(page_url)
@@ -137,7 +137,7 @@ def get_solved_by_group(group_id):
     group_problems.update(problems)
     n = 1
     for user in group_users:
-        sleep(5)
+        sleep(3)
         print(n, " / ", len(group_users))
         get_solved_by_user = get_solved(user)
         print(get_solved_by_user)
@@ -151,13 +151,22 @@ def get_problem_by_level(level):
     r_level_problem = requests.get(url)
     if r_level_problem.status_code == requests.codes.ok:
         level_problem = json.loads(r_level_problem.content.decode('utf-8'))
-
-        items = level_problem.get("items")
-        problems = set()
-        for item in items:
-            problems.add(item.get("problemId"))
+        pages = (level_problem.get("count") - 1) // 100 + 1
     else:
-        print("난이도 별 문제 요청 실패")
+        print("난이도별  문제 요청 실패")
+
+    problems = set()
+    for page in range(pages):
+        page_url = f"{url}&page={page + 1}"
+        print(page_url)
+        r_level_problem = requests.get(url)
+        if r_level_problem.status_code == requests.codes.ok:
+            level_problem = json.loads(r_level_problem.content.decode('utf-8'))
+            items = level_problem.get("items")
+            for item in items:
+                problems.add(item.get("problemId"))
+        else:
+            print("난이도별  문제 요청 실패")
     return problems
 
 
@@ -168,6 +177,9 @@ def get_unsolved_by_group(group_id):
     solved_problem = get_solved_by_group(group_id)
     for problem in solved_problem:
         cur.execute("INSERT OR IGNORE INTO problem(id) VALUES(?)", (problem,))
+    conn.commit()
+    cur.close()
+    conn.close()
     for level in range(30):
         level_problem = get_problem_by_level(level + 1)
         unsolved_level_problem = level_problem - solved_problem
