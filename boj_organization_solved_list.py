@@ -1,7 +1,7 @@
 import json
 from time import sleep
-
 import requests
+import sqlite3
 
 
 def get_profile(user_id):
@@ -35,11 +35,28 @@ def get_solved(user_id):
     :return: 내가 푼 문제수, 내가 푼 문제들 정보
     :rtype: int, list
     """
+    conn = sqlite3.connect("unsolved.db")
+    cur = conn.cursor()
+
     url = f"https://solved.ac/api/v3/search/problem?query=solved_by%3A{user_id}&sort=level&direction=desc"
     r_solved = requests.get(url)
     if r_solved.status_code == requests.codes.ok:
         solved = json.loads(r_solved.content.decode('utf-8'))
-        pages = (solved.get("count") - 1) // 100 + 1
+        count = solved.get("count")
+        pages = (count - 1) // 100 + 1
+        cur.execute("SELECT solved FROM user WHERE name = ?", (user_id,))
+        user_solved = cur.fetchone()
+        if user_solved is None:
+            cur.execute("INSERT INTO user (name, solved) VALUES (?, ?)", (user_id, count))
+        elif user_solved[0] == count:
+            cur.close()
+            conn.close()
+            return []
+        elif user_solved[0] != count:
+            cur.execute("UPDATE user SET solved = ? WHERE name = ?", (count, user_id))
+        conn.commit()
+        cur.close()
+        conn.close()
     else:
         print("푼 문제들 요청 실패")
 
@@ -51,7 +68,6 @@ def get_solved(user_id):
         r_solved = requests.get(page_url)
         if r_solved.status_code == requests.codes.ok:
             solved = json.loads(r_solved.content.decode('utf-8'))
-            count = solved.get("count")
             items = solved.get("items")
             for item in items:
                 solved_problems.append(item.get("problemId"))
@@ -60,7 +76,7 @@ def get_solved(user_id):
             print("푼 문제들 요청 실패")
             print(r_solved.status_code)
             print(url)
-    return count, solved_problems
+    return solved_problems
 
 
 def get_user_in_group(group_id):
@@ -112,13 +128,18 @@ def get_count_by_level(user_id):
 
 
 def get_solved_by_group(group_id):
+    conn = sqlite3.connect('unsolved.db')
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM problem")
+    problems = [row[0] for row in cur.fetchall()]
     group_users = get_user_in_group(group_id)
     group_problems = set()
+    group_problems.update(problems)
     n = 1
     for user in group_users:
         sleep(5)
         print(n, " / ", len(group_users))
-        get_solved_by_user = get_solved(user)[1]
+        get_solved_by_user = get_solved(user)
         print(get_solved_by_user)
         group_problems.update(get_solved_by_user)
         n = n + 1
@@ -141,13 +162,22 @@ def get_problem_by_level(level):
 
 
 def get_unsolved_by_group(group_id):
+    conn = sqlite3.connect('unsolved.db')
+    cur = conn.cursor()
+
     solved_problem = get_solved_by_group(group_id)
+    for problem in solved_problem:
+        cur.execute("INSERT OR IGNORE INTO problem(id) VALUES(?)", (problem,))
     for level in range(30):
         level_problem = get_problem_by_level(level + 1)
         unsolved_level_problem = level_problem - solved_problem
-        if len(unsolved_level_problem) > 0:
+        if len(unsolved_level_problem) == 0:
+            print(f"all solved level {level + 1}")
+        elif len(unsolved_level_problem) <= 20:
+            print(f"little left")
+            print(unsolved_level_problem)
+        else:
             return unsolved_level_problem
-        print(f"all solved level {level + 1}")
     print(f"all solved boj")
 
 
