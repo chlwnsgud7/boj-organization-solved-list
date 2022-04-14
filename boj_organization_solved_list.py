@@ -59,10 +59,11 @@ def get_solved(user_id):
         conn.close()
     else:
         print("푼 문제들 요청 실패")
+        print(r_solved.status_code)
 
     solved_problems = []
     for page in range(pages):
-        sleep(3)
+        sleep(5)
         page_url = f"{url}&page={page + 1}"
         print(page_url)
         r_solved = requests.get(page_url)
@@ -137,7 +138,7 @@ def get_solved_by_group(group_id):
     group_problems.update(problems)
     n = 1
     for user in group_users:
-        sleep(3)
+        sleep(5)
         print(n, " / ", len(group_users))
         get_solved_by_user = get_solved(user)
         print(get_solved_by_user)
@@ -159,7 +160,7 @@ def get_problem_by_level(level):
     for page in range(pages):
         page_url = f"{url}&page={page + 1}"
         print(page_url)
-        r_level_problem = requests.get(url)
+        r_level_problem = requests.get(page_url)
         if r_level_problem.status_code == requests.codes.ok:
             level_problem = json.loads(r_level_problem.content.decode('utf-8'))
             items = level_problem.get("items")
@@ -186,7 +187,7 @@ def get_unsolved_by_group(group_id):
         if len(unsolved_level_problem) == 0:
             print(f"all solved level {level + 1}")
         elif len(unsolved_level_problem) <= 20:
-            print(f"little left")
+            print(f"little left level {level + 1}")
             print(unsolved_level_problem)
         else:
             return unsolved_level_problem
