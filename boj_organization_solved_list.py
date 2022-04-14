@@ -2,6 +2,7 @@ import json
 from time import sleep
 import requests
 import sqlite3
+from db_setting import db_setting
 
 
 def get_profile(user_id):
@@ -35,7 +36,7 @@ def get_solved(user_id):
     :return: 내가 푼 문제수, 내가 푼 문제들 정보
     :rtype: int, list
     """
-    conn = sqlite3.connect("unsolved.db")
+    conn = sqlite3.connect(str(group_id)+'_unsolved.db')
     cur = conn.cursor()
 
     url = f"https://solved.ac/api/v3/search/problem?query=solved_by%3A{user_id}&sort=level&direction=desc"
@@ -129,7 +130,7 @@ def get_count_by_level(user_id):
 
 
 def get_solved_by_group(group_id):
-    conn = sqlite3.connect('unsolved.db')
+    conn = sqlite3.connect(str(group_id)+'_unsolved.db')
     cur = conn.cursor()
     cur.execute("SELECT * FROM problem")
     problems = [row[0] for row in cur.fetchall()]
@@ -172,7 +173,7 @@ def get_problem_by_level(level):
 
 
 def get_unsolved_by_group(group_id):
-    conn = sqlite3.connect('unsolved.db')
+    conn = sqlite3.connect(str(group_id)+'_unsolved.db')
     cur = conn.cursor()
 
     solved_problem = get_solved_by_group(group_id)
@@ -217,4 +218,5 @@ group_problems = get_solved_by_group(group_id)
 print(f"========{group_id}에 속한 유저들이 푼 문제들========")
 print(group_problems)"""
 
+db_setting(group_id)
 print(get_unsolved_by_group(group_id))
