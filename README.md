@@ -11,3 +11,9 @@ boj 특정 조직 내 인원이 풀지 못한 문제 리스트를 출력해주�
 2. boj_organization_solved_list.py를 실행하면 난이도 순으로 못푼 문제 리스트를 출력합니다.
 
 2-1. 특정 난이도의 못 푼 문제가 20문제 이하라면 다음 난이도의 못 푼 문제 리스트까지 출력합니다.
+
+## 참조
+
+https://solved.ac/search
+
+https://solvedac.github.io/unofficial-documentation/#/
