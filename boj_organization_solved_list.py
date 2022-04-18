@@ -34,10 +34,13 @@ def check_user(user_id):
     cur = conn.cursor()
 
     url = f"https://solved.ac/api/v3/search/problem?query=solved_by%3A{user_id}&sort=level&direction=desc"
+    print(url)
+    sleep(5)
     r_solved = requests.get(url)
     if r_solved.status_code == requests.codes.ok:
         solved = json.loads(r_solved.content.decode('utf-8'))
         count = solved.get("count")
+        items = solved.get("items")
         pages = (count - 1) // 100 + 1
         cur.execute("SELECT solved FROM user WHERE name = ?", (user_id,))
         user_solved = cur.fetchone()
@@ -53,19 +56,23 @@ def check_user(user_id):
     else:
         print("푼 문제들 요청 실패")
         print(r_solved.status_code)
-    return pages
+    return pages, items
 
 
-def get_solved(user_id, pages):
+def get_solved(user_id, pages, items):
     """
     정보 조회 - user_id를 입력하면 백준 사이트에서 해당 user가 푼 문제들 번호(level 높은 순)를 list로 반환해줌
+    :param items:
+    :param pages:
     :param str user_id: 사용자id
     :return: 해당 user가 푼 문제들 번호
     :rtype: list
     """
-    url = f"https://solved.ac/api/v3/search/problem?query=solved_by%3A{user_id}&sort=level&direction=desc"
+    url = f"https://solved.ac/api/v3/search/problem?query=s%40{user_id}&sort=level&direction=desc"
     solved_problems = []
-    for page in range(pages):
+    for item in items:
+        solved_problems.append(item.get("problemId"))
+    for page in range(1, pages):
         sleep(5)
         page_url = f"{url}&page={page + 1}"
         print(page_url)
@@ -128,15 +135,14 @@ def get_solved_by_group(group_id):
     group_problems.update(problems)
     n = 1
     for user in group_users:
-        sleep(5)
         print(n, " / ", len(group_users))
-        pages = check_user(user)
+        n = n + 1
+        pages, items = check_user(user)
         if pages == -1:
             continue
-        get_solved_by_user = get_solved(user, pages)
+        get_solved_by_user = get_solved(user, pages, items)
         print(get_solved_by_user)
         group_problems.update(get_solved_by_user)
-        n = n + 1
     return group_problems
 
 
@@ -198,8 +204,7 @@ def get_unsolved_by_group(group_id):
     print(f"all solved boj")
 
 
-user_id = "siontama"
-group_id = "1007"
+group_id = "385"
 
 """profile_dict = get_profile(user_id)
 print(f"========{user_id}님의 프로필========")
