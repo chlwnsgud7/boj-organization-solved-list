@@ -7,7 +7,7 @@ from db_setting import db_setting
 
 def get_profile(user_id):
     """
-    정보 조회 - user_id를 입력하면 백준 사이트에서 해당 user의 프로필 정보 중 일부를 반환해줌.
+    정보 조회 - user_id를 입력하면 백준 사이트에서 해당 user의 프로필 정보 중 일부를 반환해줌
     :param str user_id: 사용자id
     :return: 백준 프로필 정보
     :rtype: dict
@@ -31,10 +31,10 @@ def get_profile(user_id):
 
 def get_solved(user_id):
     """
-    정보 조회 - user_id를 입력하면 백준 사이트에서 해당 user가 푼 총 문제수, 문제들 정보(level 높은 순)를 튜플(int, list)로 반환해줌.
+    정보 조회 - user_id를 입력하면 백준 사이트에서 해당 user가 푼 문제들 번호(level 높은 순)를 list로 반환해줌
     :param str user_id: 사용자id
-    :return: 내가 푼 문제수, 내가 푼 문제들 정보
-    :rtype: int, list
+    :return: 해당 user가 푼 문제들 번호
+    :rtype: list
     """
     conn = sqlite3.connect(str(group_id)+'_unsolved.db')
     cur = conn.cursor()
@@ -110,26 +110,13 @@ def get_user_in_group(group_id):
     return users
 
 
-def get_count_by_level(user_id):
-    """
-    정보 조회 - user_id를 입력하면 백준 사이트에서 해당 user가 푼 문제들에 대한 level별 문제수 정보를 level 높은 순으로 반환해줌.
-    :param str user_id: 사용자id
-    :return: level별 총 문제수, 내가 푼 문제수
-    :rtype: list
-    """
-    url = f"https://solved.ac/api/v3/user/problem_stats?handle={user_id}"
-    r_count_by_level = requests.get(url)
-    if r_count_by_level.status_code == requests.codes.ok:
-        count_by_level = json.loads(r_count_by_level.content.decode('utf-8'))
-        filted_count_by_level = [{"level": dict_['level'], "total": dict_['total'], "solved": dict_['solved'], } for
-                                 dict_ in count_by_level if dict_.get('solved') != 0]
-        filted_count_by_level = sorted(filted_count_by_level, key=lambda x: x['level'], reverse=True)
-    else:
-        print("레벨별, 전체 문제수, 푼 문제수  요청 실패")
-    return filted_count_by_level
-
-
 def get_solved_by_group(group_id):
+    """
+    정보 조회 - group_id를 입력하면 백준 사이트에서 해당 group의 user들이 푼 문제들을 반환해줌
+    :param group_id: 그룹id
+    :return: group에서 푼 총 문제
+    :rtype: set
+    """
     conn = sqlite3.connect(str(group_id)+'_unsolved.db')
     cur = conn.cursor()
     cur.execute("SELECT * FROM problem")
@@ -149,6 +136,11 @@ def get_solved_by_group(group_id):
 
 
 def get_problem_by_level(level):
+    """
+    정보 조회 - level을 입력하면 백준 사이트에서 해당 level에 해당하는 문제들을 반환해줌
+    :param level:
+    :return: 해당 level의 문제들
+    """
     url = f"https://solved.ac/api/v3/search/problem?query=tier%3A{level}"
     r_level_problem = requests.get(url)
     if r_level_problem.status_code == requests.codes.ok:
@@ -173,6 +165,12 @@ def get_problem_by_level(level):
 
 
 def get_unsolved_by_group(group_id):
+    """
+    정보 조회 - group_id를 입력하면 백준 사이트에서 해당 group의 user들이 풀지 않은 문제들을 level별로 반환해줌
+    :param group_id: 그룹id
+    :return: 못 푼 문제가 20문제 초과로 존재하는 level의 풀지 않은 문제들
+    :rtype: set
+    """
     conn = sqlite3.connect(str(group_id)+'_unsolved.db')
     cur = conn.cursor()
 
@@ -196,7 +194,7 @@ def get_unsolved_by_group(group_id):
 
 
 user_id = "siontama"
-group_id = "385"
+group_id = "1007"
 
 """profile_dict = get_profile(user_id)
 print(f"========{user_id}님의 프로필========")
@@ -205,10 +203,6 @@ print(profile_dict)
 count, solved_list = get_solved(user_id)
 print(f"========{user_id}님이 푼 문제들({count})========")
 print(solved_list)
-
-print(f"========{user_id}님이 푼 문제들의 레벨별 갯수========")
-count_by_level_list = get_count_by_level(user_id)
-print(count_by_level_list)
 
 group_users = get_user_in_group(group_id)
 print(f"========{group_id}에 속한 유저들========")
