@@ -29,13 +29,7 @@ def get_profile(user_id):
     return profile
 
 
-def get_solved(user_id):
-    """
-    정보 조회 - user_id를 입력하면 백준 사이트에서 해당 user가 푼 문제들 번호(level 높은 순)를 list로 반환해줌
-    :param str user_id: 사용자id
-    :return: 해당 user가 푼 문제들 번호
-    :rtype: list
-    """
+def check_user(user_id):
     conn = sqlite3.connect(str(group_id)+'_unsolved.db')
     cur = conn.cursor()
 
@@ -50,9 +44,7 @@ def get_solved(user_id):
         if user_solved is None:
             cur.execute("INSERT INTO user (name, solved) VALUES (?, ?)", (user_id, count))
         elif user_solved[0] == count:
-            cur.close()
-            conn.close()
-            return []
+            pages = -1
         elif user_solved[0] != count:
             cur.execute("UPDATE user SET solved = ? WHERE name = ?", (count, user_id))
         conn.commit()
@@ -61,7 +53,17 @@ def get_solved(user_id):
     else:
         print("푼 문제들 요청 실패")
         print(r_solved.status_code)
+    return pages
 
+
+def get_solved(user_id, pages):
+    """
+    정보 조회 - user_id를 입력하면 백준 사이트에서 해당 user가 푼 문제들 번호(level 높은 순)를 list로 반환해줌
+    :param str user_id: 사용자id
+    :return: 해당 user가 푼 문제들 번호
+    :rtype: list
+    """
+    url = f"https://solved.ac/api/v3/search/problem?query=solved_by%3A{user_id}&sort=level&direction=desc"
     solved_problems = []
     for page in range(pages):
         sleep(5)
@@ -128,7 +130,10 @@ def get_solved_by_group(group_id):
     for user in group_users:
         sleep(5)
         print(n, " / ", len(group_users))
-        get_solved_by_user = get_solved(user)
+        pages = check_user(user)
+        if pages == -1:
+            continue
+        get_solved_by_user = get_solved(user, pages)
         print(get_solved_by_user)
         group_problems.update(get_solved_by_user)
         n = n + 1
