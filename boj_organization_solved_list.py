@@ -204,7 +204,7 @@ def get_unsolved_by_group(group_id):
     print(f"all solved boj")
 
 
-group_id = "385"
+group_id = "356"
 
 """profile_dict = get_profile(user_id)
 print(f"========{user_id}님의 프로필========")
